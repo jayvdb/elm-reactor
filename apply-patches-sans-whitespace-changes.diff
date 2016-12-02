@@ -1,0 +1,899 @@
+$ git --no-pager diff --ignore-all-space --ignore-blank-lines
+diff --git a/README.md b/README.md
+index 91ad400..854bc36 100644
+--- a/README.md
++++ b/README.md
+@@ -2,23 +3,25 @@
+ Sugar Tensor aims to help deep learning researchers/practitioners. It adds some syntactic sugar functions to tensorflow to avoid tedious repetitive tasks. Sugar Tensor was developed under the following principles:
+ 
+ ## Principles
++
+ 1. Don't mess up tensorflow. We provide no wrapping classes. Instead, we use a tensor itself so that developers can program freely as before with tensorflow. 
+-1. Don't mess up the python style.  We believe python source codes should look pretty and simple. Practical deep learning codes are very different from those of complex GUI programs. Do we really need inheritance 
++2. Don't mess up the python style.  We believe python source codes should look pretty and simple. Practical deep learning codes are very different from those of complex GUI programs. Do we really need inheritance 
+    and/or encapsulation in our deep learning code? Instead, we seek for simplicity and readability. For that, 
+    we use pure python functions only and avoid class style conventions.     
+ 
+ ## Installation
+ 
+ 1. Requirements
++
+    1. tensorflow >= rc0.10 
+-    1. tqdm >= 4.8.4  ( for a console progressive bar )
++   2. tqdm >= 4.8.4  ( for a console progressive bar )
+ 
+ 2. Installation
+    <pre><code>pip install sugartensor</code></pre>
+ 
+ ## Quick start
+ 
+-###Imports
++\###Imports
+ 
+ <pre><code>import sugartensor as tf   # no need of 'import tensorflow'</code></pre>
+ 
+@@ -26,7 +29,7 @@ we use pure python functions only and avoid class style conventions.
+ 
+ ### Sugar functions
+ 
+-All tensors--variables, operations, and constants--automatically have sugar functions which start with 'sg_' 
++All tensors--variables, operations, and constants--automatically have sugar functions which start with 'sg\_' 
+ to avoid name space chaos. :-)   
+ 
+ ### Chainable object syntax
+diff --git a/setup.py b/setup.py
+index 7450c84..9ea03d0 100644
+--- a/setup.py
++++ b/setup.py
+@@ -9,7 +9,7 @@ setup(
+     author='Namju Kim at Jamonglabs Co.,Ltd.',
+     author_email='buriburisuri@gmail.com',
+     url='https://github.com/buriburisuri/sugartensor',
+-    download_url='https://github.com/buriburisuri/sugartensor/tarball/0.0.1.9',
++    download_url='https://codeload.github.com/buriburisuri/sugartensor/legacy.tar.gz/0.0.1.9',
+     keywords=['tensorflow', 'sugar', 'sugartensor', 'slim', 'wrapper'],
+     classifiers=[],
+     license='MIT',
+diff --git a/sugartensor/__init__.py b/sugartensor/__init__.py
+index a58f186..8b8ed8f 100644
+--- a/sugartensor/__init__.py
++++ b/sugartensor/__init__.py
+@@ -20,7 +20,7 @@ __author__ = 'buriburisuri@gmail.com'
+ # augmenting tensorflow Variable and Tensor type by injecting custom methods
+ #
+ 
+-modules = ['sg_activation', 'sg_metric', 'sg_layer', 'sg_loss', 'sg_transform', 'sg_net']
++modules = ['sg_activation', 'sg_metric',
++           'sg_layer', 'sg_loss', 'sg_transform', 'sg_net']
+ for mod in modules:
+     sg_inject(__path__[0], mod)
+-
+diff --git a/sugartensor/example/mnist_conv.py b/sugartensor/example/mnist_conv.py
+index d962392..345d51d 100644
+--- a/sugartensor/example/mnist_conv.py
++++ b/sugartensor/example/mnist_conv.py
+@@ -28,5 +28,5 @@ acc = (logit.sg_reuse(input=data.valid.image).sg_softmax()
+        .sg_accuracy(target=data.valid.label, name='val'))
+ 
+ # train
+-tf.sg_train(loss=loss, eval_metric=[acc], ep_size=data.train.num_batch, save_dir='asset/train/conv')
+-
++tf.sg_train(loss=loss, eval_metric=[
++            acc], ep_size=data.train.num_batch, save_dir='asset/train/conv')
+diff --git a/sugartensor/example/mnist_dense.py b/sugartensor/example/mnist_dense.py
+index 2c99cd1..8562cf7 100644
+--- a/sugartensor/example/mnist_dense.py
++++ b/sugartensor/example/mnist_dense.py
+@@ -25,5 +25,5 @@ acc = (logit.sg_reuse(input=data.valid.image).sg_softmax()
+        .sg_accuracy(target=data.valid.label, name='val'))
+ 
+ # train
+-tf.sg_train(loss=loss, eval_metric=[acc], ep_size=data.train.num_batch, log_interval=10)
+-
++tf.sg_train(loss=loss, eval_metric=[
++            acc], ep_size=data.train.num_batch, log_interval=10)
+diff --git a/sugartensor/example/mnist_gan.py b/sugartensor/example/mnist_gan.py
+index ac80159..37ce728 100644
+--- a/sugartensor/example/mnist_gan.py
++++ b/sugartensor/example/mnist_gan.py
+@@ -63,8 +63,10 @@ loss_disc = disc.sg_bce(target=y_disc)  # discriminator loss
+ loss_gen = disc.sg_reuse(input=gen).sg_bce(target=y)  # generator loss
+ 
+ 
+-train_disc = tf.sg_optim(loss_disc, lr=0.0001, category='discriminator')  # discriminator train ops
+-train_gen = tf.sg_optim(loss_gen, lr=0.001, category='generator')  # generator train ops
++# discriminator train ops
++train_disc = tf.sg_optim(loss_disc, lr=0.0001, category='discriminator')
++# generator train ops
++train_gen = tf.sg_optim(loss_gen, lr=0.001, category='generator')
+ 
+ 
+ #
+diff --git a/sugartensor/example/mnist_info_gan.py b/sugartensor/example/mnist_info_gan.py
+index 5c6b621..e4085dc 100644
+--- a/sugartensor/example/mnist_info_gan.py
++++ b/sugartensor/example/mnist_info_gan.py
+@@ -35,10 +35,12 @@ y_disc = tf.concat(0, [y, y * 0])
+ #
+ 
+ # random class number
+-z_cat = tf.multinomial(tf.ones((batch_size, num_category), dtype=tf.sg_floatx) / num_category, 1).sg_squeeze()
++z_cat = tf.multinomial(tf.ones((batch_size, num_category),
++                               dtype=tf.sg_floatx) / num_category, 1).sg_squeeze()
+ 
+ # random seed = random categorical variable + random uniform
+-z = z_cat.sg_one_hot(depth=num_category).sg_concat(target=tf.random_uniform((batch_size, num_dim-num_category)))
++z = z_cat.sg_one_hot(depth=num_category).sg_concat(
++    target=tf.random_uniform((batch_size, num_dim-num_category)))
+ 
+ # random continuous variable
+ z_cont = z[:, num_category:num_category+num_cont]
+@@ -81,12 +83,16 @@ with tf.sg_context(name='discriminator', size=4, stride=2, act='leaky_relu'):
+ #
+ 
+ loss_disc = tf.reduce_mean(disc.sg_bce(target=y_disc))  # discriminator loss
+-loss_gen = tf.reduce_mean(disc.sg_reuse(input=gen).sg_bce(target=y))  # generator loss
++loss_gen = tf.reduce_mean(disc.sg_reuse(
++    input=gen).sg_bce(target=y))  # generator loss
+ loss_recog = tf.reduce_mean(recog_cat.sg_ce(target=z_cat)) \
+-             + tf.reduce_mean(recog_cont.sg_mse(target=z_cont))  # recognizer loss
++             + tf.reduce_mean(recog_cont.sg_mse(target=z_cont)
++                              )  # recognizer loss
+ 
+-train_disc = tf.sg_optim(loss_disc + loss_recog, lr=0.0001, category='discriminator')  # discriminator train ops
+-train_gen = tf.sg_optim(loss_gen + loss_recog, lr=0.001, category='generator')  # generator train ops
++train_disc = tf.sg_optim(loss_disc + loss_recog, lr=0.0001,
++                         category='discriminator')  # discriminator train ops
++train_gen = tf.sg_optim(loss_gen + loss_recog, lr=0.001,
++                        category='generator')  # generator train ops
+ 
+ 
+ #
+diff --git a/sugartensor/example/mnist_info_gan_eval.py b/sugartensor/example/mnist_info_gan_eval.py
+index b45d380..16a8c8f 100644
+--- a/sugartensor/example/mnist_info_gan_eval.py
++++ b/sugartensor/example/mnist_info_gan_eval.py
+@@ -27,13 +27,16 @@ target_cval_1 = tf.placeholder(dtype=tf.sg_floatx, shape=batch_size)
+ target_cval_2 = tf.placeholder(dtype=tf.sg_floatx, shape=batch_size)
+ 
+ # category variables
+-z = (tf.ones(batch_size, dtype=tf.sg_intx) * target_num).sg_one_hot(depth=num_category)
++z = (tf.ones(batch_size, dtype=tf.sg_intx) *
++     target_num).sg_one_hot(depth=num_category)
+ 
+ # continuous variables
+-z = z.sg_concat(target=[target_cval_1.sg_expand_dims(), target_cval_2.sg_expand_dims()])
++z = z.sg_concat(target=[target_cval_1.sg_expand_dims(),
++                        target_cval_2.sg_expand_dims()])
+ 
+ # random seed = categorical variable + continuous variable + random uniform
+-z = z.sg_concat(target=tf.random_uniform((batch_size, num_dim-num_category-num_cont)))
++z = z.sg_concat(target=tf.random_uniform(
++    (batch_size, num_dim-num_category-num_cont)))
+ 
+ #
+ # create generator
+@@ -56,7 +59,8 @@ def run_generator(num, x1, x2, fig_name='sample.png'):
+         tf.sg_init(sess)
+         # restore parameters
+         saver = tf.train.Saver()
+-        saver.restore(sess, tf.train.latest_checkpoint('asset/train/infogan/ckpt'))
++        saver.restore(sess, tf.train.latest_checkpoint(
++            'asset/train/infogan/ckpt'))
+ 
+         # run generator
+         imgs = sess.run(gen, {target_num: num,
+@@ -80,11 +84,13 @@ def run_generator(num, x1, x2, fig_name='sample.png'):
+ 
+ # fake image
+ run_generator(np.random.randint(0, num_category, batch_size),
+-              np.random.uniform(0, 1, batch_size), np.random.uniform(0, 1, batch_size),
++              np.random.uniform(0, 1, batch_size), np.random.uniform(
++                  0, 1, batch_size),
+               fig_name='fake.png')
+ 
+ # classified image
+-run_generator(np.arange(10).repeat(10), np.ones(batch_size) * 0.5, np.ones(batch_size) * 0.5)
++run_generator(np.arange(10).repeat(10), np.ones(
++    batch_size) * 0.5, np.ones(batch_size) * 0.5)
+ 
+ #
+ # draw sample by continuous division
+@@ -93,5 +99,6 @@ run_generator(np.arange(10).repeat(10), np.ones(batch_size) * 0.5, np.ones(batch
+ for i in range(10):
+     run_generator(np.ones(batch_size) * i,
+                   np.linspace(0, 1, 10).repeat(10),
+-                  np.expand_dims(np.linspace(0, 1, 10), axis=1).repeat(10, axis=1).T.flatten(),
++                  np.expand_dims(np.linspace(0, 1, 10), axis=1).repeat(
++                      10, axis=1).T.flatten(),
+                   fig_name='sample%d.png' % i)
+diff --git a/sugartensor/sg_data.py b/sugartensor/sg_data.py
+index 430a676..c3ae96e 100644
+--- a/sugartensor/sg_data.py
++++ b/sugartensor/sg_data.py
+@@ -21,7 +21,8 @@ def _data_to_tensor(data_list, batch_size, name=None):
+     const_list = [tf.constant(data) for data in data_list]
+ 
+     # create queue from constant tensor
+-    queue_list = tf.train.slice_input_producer(const_list, capacity=batch_size*128, name=name)
++    queue_list = tf.train.slice_input_producer(
++        const_list, capacity=batch_size*128, name=name)
+ 
+     # create batch queue
+     return tf.train.shuffle_batch(queue_list, batch_size, capacity=batch_size*128,
+@@ -36,7 +37,8 @@ class Mnist(object):
+     def __init__(self, batch_size=128, reshape=False, one_hot=False):
+ 
+         # load sg_data set
+-        data_set = input_data.read_data_sets(Mnist._data_dir, reshape=reshape, one_hot=one_hot)
++        data_set = input_data.read_data_sets(
++            Mnist._data_dir, reshape=reshape, one_hot=one_hot)
+ 
+         self.batch_size = batch_size
+ 
+@@ -50,11 +52,14 @@ class Mnist(object):
+ 
+         # convert to tensor queue
+         self.train.image, self.train.label = \
+-            _data_to_tensor([_train.images, _train.labels.astype('int32')], batch_size, name='train')
++            _data_to_tensor([_train.images, _train.labels.astype(
++                'int32')], batch_size, name='train')
+         self.valid.image, self.valid.label = \
+-            _data_to_tensor([_valid.images, _valid.labels.astype('int32')], batch_size, name='valid')
++            _data_to_tensor([_valid.images, _valid.labels.astype(
++                'int32')], batch_size, name='valid')
+         self.test.image, self.test.label = \
+-            _data_to_tensor([_test.images, _test.labels.astype('int32')], batch_size, name='test')
++            _data_to_tensor([_test.images, _test.labels.astype(
++                'int32')], batch_size, name='test')
+ 
+         # calc total batch count
+         self.train.num_batch = _train.labels.shape[0] // batch_size
+diff --git a/sugartensor/sg_initializer.py b/sugartensor/sg_initializer.py
+index 161d8a6..fc31882 100644
+--- a/sugartensor/sg_initializer.py
++++ b/sugartensor/sg_initializer.py
+@@ -32,7 +32,7 @@ def uniform(name, shape, scale=0.05, dtype=tf.sg_floatx):
+ 
+ 
+ def he_uniform(name, shape, scale=1, dtype=tf.sg_floatx):
+-    r"""See He et al. 2015 `http://arxiv.org/pdf/1502.01852v1.pdf`
++    r"""See He et al. 2015 `https://arxiv.org/pdf/1502.01852v1.pdf%60
+     """
+     fin, _ = _get_fans(shape)
+     s = np.sqrt(1. * scale / fin)
+@@ -70,7 +70,7 @@ def identity(name, dim, scale=1, dtype=tf.sg_floatx):
+ 
+ def orthogonal(name, shape, scale=1.1, dtype=tf.sg_floatx):
+     r"""Returns a random orthogonal initializer.
+-    See Saxe et al. 2014 `http://arxiv.org/pdf/1312.6120.pdf`
++    See Saxe et al. 2014 `https://arxiv.org/pdf/1312.6120.pdf%60
+ 
+     Args:
+       name: A string. The name of the new or existing variable.
+diff --git a/sugartensor/sg_layer.py b/sugartensor/sg_layer.py
+index 2120777..f51e936 100644
+--- a/sugartensor/sg_layer.py
++++ b/sugartensor/sg_layer.py
+@@ -72,9 +72,12 @@ def sg_conv(tensor, opt):
+     """
+     # default options
+     opt += tf.sg_opt(size=(3, 3), stride=(1, 1, 1, 1), pad='SAME')
+-    opt.size = opt.size if isinstance(opt.size, (tuple, list)) else [opt.size, opt.size]
+-    opt.stride = opt.stride if isinstance(opt.stride, (tuple, list)) else [1, opt.stride, opt.stride, 1]
+-    opt.stride = [1, opt.stride[0], opt.stride[1], 1] if len(opt.stride) == 2 else opt.stride
++    opt.size = opt.size if isinstance(opt.size, (tuple, list)) else [
++                                      opt.size, opt.size]
++    opt.stride = opt.stride if isinstance(opt.stride, (tuple, list)) else [
++                                          1, opt.stride, opt.stride, 1]
++    opt.stride = [1, opt.stride[0], opt.stride[1],
++                  1] if len(opt.stride) == 2 else opt.stride
+ 
+     # parameter initialize
+     w = init.he_uniform('W', (opt.size[0], opt.size[1], opt.in_dim, opt.dim))
+@@ -82,7 +85,8 @@ def sg_conv(tensor, opt):
+         b = init.constant('b', opt.dim)
+ 
+     # apply convolution
+-    out = tf.nn.conv2d(tensor, w, strides=opt.stride, padding=opt.pad) + (b if opt.bias else 0)
++    out = tf.nn.conv2d(tensor, w, strides=opt.stride,
++                       padding=opt.pad) + (b if opt.bias else 0)
+ 
+     return out
+ 
+@@ -114,7 +118,8 @@ def sg_conv1d(tensor, opt):
+         b = init.constant('b', opt.dim)
+ 
+     # apply convolution
+-    out = tf.nn.conv1d(tensor, w, stride=opt.stride, padding=opt.pad) + (b if opt.bias else 0)
++    out = tf.nn.conv1d(tensor, w, stride=opt.stride,
++                       padding=opt.pad) + (b if opt.bias else 0)
+ 
+     return out
+ 
+@@ -140,7 +145,8 @@ def sg_aconv(tensor, opt):
+     """
+     # default options
+     opt += tf.sg_opt(size=(3, 3), rate=2, pad='SAME')
+-    opt.size = opt.size if isinstance(opt.size, (tuple, list)) else [opt.size, opt.size]
++    opt.size = opt.size if isinstance(opt.size, (tuple, list)) else [
++                                      opt.size, opt.size]
+ 
+     # parameter initialize
+     w = init.he_uniform('W', (opt.size[0], opt.size[1], opt.in_dim, opt.dim))
+@@ -148,7 +154,8 @@ def sg_aconv(tensor, opt):
+         b = init.constant('b', opt.dim)
+ 
+     # apply convolution
+-    out = tf.nn.atrous_conv2d(tensor, w, rate=opt.rate, padding=opt.pad) + (b if opt.bias else 0)
++    out = tf.nn.atrous_conv2d(tensor, w, rate=opt.rate,
++                              padding=opt.pad) + (b if opt.bias else 0)
+ 
+     return out
+ 
+@@ -185,11 +192,13 @@ def sg_aconv1d(tensor, opt):
+         # pre-padding for causality
+         if opt.pad == 'SAME':
+             pad_len = (opt.size - 1) * opt.rate  # padding size
+-            x = tf.pad(tensor, [[0, 0], [pad_len, 0], [0, 0]]).sg_expand_dims(dim=1)
++            x = tf.pad(tensor, [[0, 0], [pad_len, 0],
++                                [0, 0]]).sg_expand_dims(dim=1)
+         else:
+             x = tensor.sg_expand_dims(dim=1)
+         # apply 2d convolution
+-        out = tf.nn.atrous_conv2d(x, w, rate=opt.rate, padding='VALID') + (b if opt.bias else 0)
++        out = tf.nn.atrous_conv2d(
++            x, w, rate=opt.rate, padding='VALID') + (b if opt.bias else 0)
+     else:
+         # apply 2d convolution
+         out = tf.nn.atrous_conv2d(tensor.sg_expand_dims(dim=1),
+@@ -224,9 +233,12 @@ def sg_upconv(tensor, opt):
+     """
+     # default options
+     opt += tf.sg_opt(size=(3, 3), stride=(1, 2, 2, 1), pad='SAME')
+-    opt.size = opt.size if isinstance(opt.size, (tuple, list)) else [opt.size, opt.size]
+-    opt.stride = opt.stride if isinstance(opt.stride, (tuple, list)) else [1, opt.stride, opt.stride, 1]
+-    opt.stride = [1, opt.stride[0], opt.stride[1], 1] if len(opt.stride) == 2 else opt.stride
++    opt.size = opt.size if isinstance(opt.size, (tuple, list)) else [
++                                      opt.size, opt.size]
++    opt.stride = opt.stride if isinstance(opt.stride, (tuple, list)) else [
++                                          1, opt.stride, opt.stride, 1]
++    opt.stride = [1, opt.stride[0], opt.stride[1],
++                  1] if len(opt.stride) == 2 else opt.stride
+ 
+     # parameter initialize
+     w = init.he_uniform('W', (opt.size[0], opt.size[1], opt.dim, opt.in_dim))
+@@ -235,12 +247,14 @@ def sg_upconv(tensor, opt):
+ 
+     # tedious shape handling for conv2d_transpose
+     shape = tensor.get_shape().as_list()
+-    out_shape = [tf.shape(tensor)[0], shape[1] * opt.stride[1], shape[2] * opt.stride[2], opt.dim]
++    out_shape = [tf.shape(tensor)[0], shape[1] *
++                 opt.stride[1], shape[2] * opt.stride[2], opt.dim]
+ 
+     # apply convolution
+     out = tf.nn.conv2d_transpose(tensor, w, output_shape=tf.pack(out_shape),
+                                  strides=opt.stride, padding=opt.pad) + (b if opt.bias else 0)
+-    # reset shape is needed because conv2d_transpose() erase all shape information.
++    # reset shape is needed because conv2d_transpose() erase all shape
++    # information.
+     out.set_shape([None, out_shape[1], out_shape[2], opt.dim])
+ 
+     return out
+@@ -278,7 +292,8 @@ def sg_emb(**kwargs):
+         # use given embedding matrix
+         w = init.external(opt.name, value=opt.emb)
+ 
+-    # 1st row should be zero and not be updated by backprop because of zero padding.
++    # 1st row should be zero and not be updated by backprop because of zero
++    # padding.
+     emb = tf.concat(0, [tf.zeros((1, opt.dim), dtype=tf.sg_floatx), w])
+ 
+     return emb
+@@ -298,7 +313,8 @@ def _ln_rnn(x, gamma, beta):
+       A `Tensor` with the same shape as `x`.
+     """
+     # calc layer mean, variance for final axis
+-    mean, variance = tf.nn.moments(x, axes=[len(x.get_shape()) - 1], keep_dims=True)
++    mean, variance = tf.nn.moments(
++        x, axes=[len(x.get_shape()) - 1], keep_dims=True)
+ 
+     # apply layer normalization
+     x = (x - mean) / tf.sqrt(variance + tf.sg_eps)
+@@ -330,7 +347,8 @@ def sg_rnn(tensor, opt):
+     def step(h, x):
+         # simple rnn
+         ### Replace tensor[:, i, :] with x. bryan ###
+-        y = ln(tf.matmul(tensor[:, i, :], w) + tf.matmul(h, u) + (b if opt.bias else 0))
++        y = ln(tf.matmul(tensor[:, i, :], w) +
++               tf.matmul(h, u) + (b if opt.bias else 0))
+         return y
+ 
+     # parameter initialize
+@@ -390,11 +408,14 @@ def sg_gru(tensor, opt):
+     # step func
+     def step(h, x):
+         # update gate
+-        z = tf.sigmoid(ln(tf.matmul(x, w_z) + tf.matmul(h, u_z) + (b_z if opt.bias else 0)))
++        z = tf.sigmoid(
++            ln(tf.matmul(x, w_z) + tf.matmul(h, u_z) + (b_z if opt.bias else 0)))
+         # reset gate
+-        r = tf.sigmoid(ln(tf.matmul(x, w_r) + tf.matmul(h, u_r) + (b_r if opt.bias else 0)))
++        r = tf.sigmoid(
++            ln(tf.matmul(x, w_r) + tf.matmul(h, u_r) + (b_r if opt.bias else 0)))
+         # h_hat
+-        hh = tf.tanh(ln(tf.matmul(x, w_h) + tf.matmul(r*h, u_h) + (b_h if opt.bias else 0)))
++        hh = tf.tanh(
++            ln(tf.matmul(x, w_h) + tf.matmul(r*h, u_h) + (b_h if opt.bias else 0)))
+         # final output
+         y = (1. - z) * h + z * hh
+         return y
+@@ -461,13 +482,17 @@ def sg_lstm(tensor, opt):
+     # step func
+     def step(h, c, x):
+         # forget gate
+-        f = tf.sigmoid(ln(tf.matmul(x, w_f) + tf.matmul(h, u_f) + (b_f if opt.bias else 0)))
++        f = tf.sigmoid(
++            ln(tf.matmul(x, w_f) + tf.matmul(h, u_f) + (b_f if opt.bias else 0)))
+         # input gate
+-        i = tf.sigmoid(ln(tf.matmul(x, w_i) + tf.matmul(h, u_i) + (b_i if opt.bias else 0)))
++        i = tf.sigmoid(
++            ln(tf.matmul(x, w_i) + tf.matmul(h, u_i) + (b_i if opt.bias else 0)))
+         # new cell value
+-        cc = tf.tanh(ln(tf.matmul(x, w_c) + tf.matmul(h, u_c) + (b_c if opt.bias else 0)))
++        cc = tf.tanh(ln(tf.matmul(x, w_c) + tf.matmul(h, u_c) +
++                        (b_c if opt.bias else 0)))
+         # out gate
+-        o = tf.sigmoid(ln(tf.matmul(x, w_o) + tf.matmul(h, u_o) + (b_o if opt.bias else 0)))
++        o = tf.sigmoid(
++            ln(tf.matmul(x, w_o) + tf.matmul(h, u_o) + (b_o if opt.bias else 0)))
+         # cell update
+         cell = f * c + i * cc
+         # final output
+diff --git a/sugartensor/sg_loss.py b/sugartensor/sg_loss.py
+index f2959c0..ad38b00 100644
+--- a/sugartensor/sg_loss.py
++++ b/sugartensor/sg_loss.py
+@@ -37,9 +37,11 @@ def sg_ce(tensor, opt):
+     assert opt.target is not None, 'target is mandatory.'
+ 
+     if opt.one_hot:
+-        out = tf.identity(tf.nn.softmax_cross_entropy_with_logits(tensor, opt.target), 'ce')
++        out = tf.identity(tf.nn.softmax_cross_entropy_with_logits(
++            tensor, opt.target), 'ce')
+     else:
+-        out = tf.identity(tf.nn.sparse_softmax_cross_entropy_with_logits(tensor, opt.target), 'ce')
++        out = tf.identity(tf.nn.sparse_softmax_cross_entropy_with_logits(
++            tensor, opt.target), 'ce')
+ 
+     # masking loss
+     if opt.mask:
+@@ -74,7 +76,8 @@ def sg_bce(tensor, opt):
+ 
+     assert opt.target is not None, 'target is mandatory.'
+ 
+-    out = tf.identity(tf.nn.sigmoid_cross_entropy_with_logits(tensor, opt.target), 'bce')
++    out = tf.identity(tf.nn.sigmoid_cross_entropy_with_logits(
++        tensor, opt.target), 'bce')
+ 
+     # add summary
+     tf.sg_summary_loss(out)
+@@ -210,7 +213,8 @@ def sg_ctc(tensor, opt):
+     opt += tf.sg_opt(seq_len=tf.ones((shape[0],), dtype=tf.sg_intx) * shape[1])
+ 
+     # ctc loss
+-    out = tf.nn.ctc_loss(tensor, opt.target.sg_to_sparse(), opt.seq_len, time_major=False)
++    out = tf.nn.ctc_loss(tensor, opt.target.sg_to_sparse(),
++                         opt.seq_len, time_major=False)
+     out = tf.identity(out, 'ctc')
+ 
+     # add summary
+diff --git a/sugartensor/sg_main.py b/sugartensor/sg_main.py
+index 4ac1c6b..1f3839c 100644
+--- a/sugartensor/sg_main.py
++++ b/sugartensor/sg_main.py
+@@ -32,7 +32,8 @@ def sg_global_step(as_tensor=True):
+ # global phase(train or infer) flag
+ #
+ 
+-_phase = tf.Variable(False, name='phase', trainable=False, collections=[tf.GraphKeys.LOCAL_VARIABLES])
++_phase = tf.Variable(False, name='phase', trainable=False,
++                     collections=[tf.GraphKeys.LOCAL_VARIABLES])
+ _phase_train = _phase.assign(True)
+ _phase_infer = _phase.assign(False)
+ 
+@@ -83,7 +84,8 @@ def sg_sugar_func(func):
+         # call sugar function
+         out = func(tensor, tf.sg_opt(kwargs))
+         # save node info for reuse
+-        out._sugar = tf.sg_opt(func=func, arg=tf.sg_opt(kwargs)+_context, prev=tensor)
++        out._sugar = tf.sg_opt(func=func, arg=tf.sg_opt(
++            kwargs)+_context, prev=tensor)
+         # inject reuse function
+         out.sg_reuse = types.MethodType(sg_reuse, out)
+         return out
+@@ -128,8 +130,10 @@ def sg_layer_func(func):
+         try:
+             shape = tensor.get_shape().as_list()
+             # batch normalization off, layer normalization off, dropout off
+-            opt += tf.sg_opt(shape=shape, in_dim=shape[-1], dim=shape[-1], bn=False, ln=False, dout=0)
+-            assert not (opt.bn and opt.ln), 'one of batch normalization and layer normalization is available.'
++            opt += tf.sg_opt(shape=shape,
++                             in_dim=shape[-1], dim=shape[-1], bn=False, ln=False, dout=0)
++            assert not (
++                opt.bn and opt.ln), 'one of batch normalization and layer normalization is available.'
+ 
+             # disable bias when normalization on
+             opt += tf.sg_opt(bias=not (opt.bn or opt.ln))
+@@ -156,7 +160,8 @@ def sg_layer_func(func):
+             if len(exist_layers) == 0:
+                 opt.name += '_1'
+             else:
+-                opt.name += '_%d' % (max([int(n.split('_')[-1]) for n in exist_layers]) + 1)
++                opt.name += '_%d' % (max([int(n.split('_')[-1])
++                                          for n in exist_layers]) + 1)
+ 
+         # all layer variables start with 'layers/' prefix
+         with tf.variable_scope('layers', reuse=opt.reuse):
+@@ -174,10 +179,12 @@ def sg_layer_func(func):
+ 
+                     # offset, scale parameter
+                     mean_running = init.constant('mean', opt.dim)
+-                    variance_running = init.constant('variance', opt.dim, value=1)
++                    variance_running = init.constant(
++                        'variance', opt.dim, value=1)
+ 
+                     # calc batch mean, variance
+-                    mean, variance = tf.nn.moments(out, axes=range(len(out.get_shape()) - 1))
++                    mean, variance = tf.nn.moments(
++                        out, axes=range(len(out.get_shape()) - 1))
+ 
+                     # update running mean, variance
+                     def update_running_stat():
+@@ -193,7 +200,8 @@ def sg_layer_func(func):
+                                    lambda: (mean_running, variance_running))  # saved mean, variance
+ 
+                     # apply batch normalization
+-                    out = tf.nn.batch_normalization(out, m, v, beta, gamma, tf.sg_eps)
++                    out = tf.nn.batch_normalization(
++                        out, m, v, beta, gamma, tf.sg_eps)
+ 
+                 # apply normalization parameters
+                 if opt.ln:
+@@ -202,7 +210,8 @@ def sg_layer_func(func):
+                     gamma = init.constant('gamma', opt.dim, value=1)
+ 
+                     # calc layer mean, variance for final axis
+-                    mean, variance = tf.nn.moments(out, axes=[len(out.get_shape()) - 1], keep_dims=True)
++                    mean, variance = tf.nn.moments(
++                        out, axes=[len(out.get_shape()) - 1], keep_dims=True)
+ 
+                     # apply normalization
+                     out = (out - mean) / tf.sqrt(variance + tf.sg_eps)
+@@ -248,7 +257,8 @@ def sg_rnn_layer_func(func):
+         try:
+             shape = tensor.get_shape().as_list()
+             # dropout off
+-            opt += tf.sg_opt(shape=shape, in_dim=shape[-1], dim=shape[-1], dout=0)
++            opt += tf.sg_opt(shape=shape,
++                             in_dim=shape[-1], dim=shape[-1], dout=0)
+             # disable bias when normalization on
+             opt += tf.sg_opt(bias=not opt.ln)
+         finally:
+@@ -274,7 +284,8 @@ def sg_rnn_layer_func(func):
+             if len(exist_layers) == 0:
+                 opt.name += '_1'
+             else:
+-                opt.name += '_%d' % (max([int(n.split('_')[-1]) for n in exist_layers]) + 1)
++                opt.name += '_%d' % (max([int(n.split('_')[-1])
++                                          for n in exist_layers]) + 1)
+ 
+         # all layer variables start with 'layers/' prefix
+         with tf.variable_scope('layers', reuse=opt.reuse):
+@@ -332,9 +343,11 @@ def sg_reuse(tensor, **opt):
+             fn = tf.sg_layer_func(node._sugar.func)
+             if node._sugar.arg.context_name:
+                 with tf.variable_scope(node._sugar.arg.context_name):
+-                    out = fn(out, **(node._sugar.arg + tf.sg_opt(name=node._sugar.name, reuse=True)))
++                    out = fn(out, **(node._sugar.arg +
++                                     tf.sg_opt(name=node._sugar.name, reuse=True)))
+             else:
+-                out = fn(out, **(node._sugar.arg + tf.sg_opt(name=node._sugar.name, reuse=True)))
++                out = fn(out, **(node._sugar.arg +
++                                 tf.sg_opt(name=node._sugar.name, reuse=True)))
+         else:
+             out = node._sugar.func(out, node._sugar.arg)
+ 
+@@ -369,9 +382,11 @@ def sg_inject(path, mod_name):
+         if isinstance(globals()[mod_name].__dict__.get(func_name), types.FunctionType):
+             if not func_name.startswith('_'):
+                 # inject to tf.Variable type
+-                exec ('tf.Variable.%s = types.MethodType(%s.%s, None, tf.Variable)' % (func_name, mod_name, func_name))
++                exec('tf.Variable.%s = types.MethodType(%s.%s, None, tf.Variable)' % (
++                    func_name, mod_name, func_name))
+                 # inject to tf.Tensor type
+-                exec ('tf.Tensor.%s = types.MethodType(%s.%s, None, tf.Tensor)' % (func_name, mod_name, func_name))
++                exec('tf.Tensor.%s = types.MethodType(%s.%s, None, tf.Tensor)' %
++                     (func_name, mod_name, func_name))
+ 
+ 
+ def sg_inject_func(func):
+diff --git a/sugartensor/sg_metric.py b/sugartensor/sg_metric.py
+index e34cdc5..ffd4bdb 100644
+--- a/sugartensor/sg_metric.py
++++ b/sugartensor/sg_metric.py
+@@ -32,7 +32,8 @@ def sg_accuracy(tensor, opt):
+     opt += tf.sg_opt(k=1)
+ 
+     # # calc accuracy
+-    out = tf.identity(tf.equal(tensor.sg_argmax(), tf.cast(opt.target, tf.int64)).sg_float(), name='acc')
++    out = tf.identity(tf.equal(tensor.sg_argmax(), tf.cast(
++        opt.target, tf.int64)).sg_float(), name='acc')
+     # out = tf.identity(tf.nn.in_top_k(tensor, opt.target, opt.k).sg_float(), name='acc')
+ 
+     return out
+diff --git a/sugartensor/sg_optimize.py b/sugartensor/sg_optimize.py
+index 1980007..d661b02 100644
+--- a/sugartensor/sg_optimize.py
++++ b/sugartensor/sg_optimize.py
+@@ -6,8 +6,8 @@ __author__ = 'buriburisuri@gmail.com'
+ 
+ class AdaMaxOptimizer(tf.train.Optimizer):
+     """Optimizer that implements the Adamax algorithm.
+-    See [Kingma et. al., 2014](http://arxiv.org/abs/1412.6980)
+-    ([pdf](http://arxiv.org/pdf/1412.6980.pdf)).
++    See [Kingma et. al., 2014](https://arxiv.org/abs/1412.6980)
++    ([pdf](https://arxiv.org/pdf/1412.6980.pdf)).
+ 
+     excerpted from https://github.com/openai/iaf/blob/master/tf_utils/adamax.py
+ 
+@@ -41,7 +41,9 @@ class AdaMaxOptimizer(tf.train.Optimizer):
+         beta1_t = tf.cast(self._beta1_t, var.dtype.base_dtype)
+         beta2_t = tf.cast(self._beta2_t, var.dtype.base_dtype)
+         if var.dtype.base_dtype == tf.float16:
+-            eps = 1e-7  # Can't use 1e-8 due to underflow -- not sure if it makes a big difference.
++            # Can't use 1e-8 due to underflow -- not sure if it makes a big
++            # difference.
++            eps = 1e-7
+         else:
+             eps = 1e-8
+ 
+@@ -81,7 +84,9 @@ class MaxPropOptimizer(tf.train.Optimizer):
+         lr_t = tf.cast(self._lr_t, var.dtype.base_dtype)
+         beta2_t = tf.cast(self._beta2_t, var.dtype.base_dtype)
+         if var.dtype.base_dtype == tf.float16:
+-            eps = 1e-7  # Can't use 1e-8 due to underflow -- not sure if it makes a big difference.
++            # Can't use 1e-8 due to underflow -- not sure if it makes a big
++            # difference.
++            eps = 1e-7
+         else:
+             eps = 1e-8
+ 
+diff --git a/sugartensor/sg_queue.py b/sugartensor/sg_queue.py
+index 65358cf..1d2cbff 100644
+--- a/sugartensor/sg_queue.py
++++ b/sugartensor/sg_queue.py
+@@ -13,7 +13,8 @@ def sg_producer_func(func):
+     def wrapper(**kwargs):
+ 
+         # default option
+-        opt = tf.sg_opt(kwargs) + tf.sg_opt(dtypes=[tf.sg_floatx], capacity=32, num_threads=1)
++        opt = tf.sg_opt(
++            kwargs) + tf.sg_opt(dtypes=[tf.sg_floatx], capacity=32, num_threads=1)
+ 
+         # source queue list check
+         assert opt.source is not None, 'source is mandatory.'
+@@ -21,7 +22,8 @@ def sg_producer_func(func):
+             opt.source = [opt.source]
+         if type(opt.dtypes) is not list and type(opt.dtypes) is not tuple:
+             opt.dtypes = [opt.dtypes]
+-        assert len(opt.source) == len(opt.dtypes), 'Source and dtypes shoud have same length.'
++        assert len(opt.source) == len(
++            opt.dtypes), 'Source and dtypes shoud have same length.'
+ 
+         # enqueue function
+         def enqueue_func(sess, op, coord):
+@@ -46,7 +48,8 @@ def sg_producer_func(func):
+         enqueue_op = queue.enqueue(placeholders)
+ 
+         # create queue runner
+-        runner = FuncQueueRunner(enqueue_func, queue, [enqueue_op] * opt.num_threads)
++        runner = FuncQueueRunner(enqueue_func, queue, [
++                                 enqueue_op] * opt.num_threads)
+ 
+         # register to global collection
+         tf.train.add_queue_runner(runner)
+@@ -90,7 +93,8 @@ class FuncQueueRunner(tf.train.QueueRunner):
+                                 sess.run(self._close_op)
+                             except Exception as e:
+                                 # Intentionally ignore errors from close_op.
+-                                logging.vlog(1, "Ignored exception: %s", str(e))
++                                logging.vlog(
++                                    1, "Ignored exception: %s", str(e))
+                         return
+         except Exception as e:
+             # This catches all other exceptions.
+diff --git a/sugartensor/sg_train.py b/sugartensor/sg_train.py
+index b4b5ec1..abb880f 100644
+--- a/sugartensor/sg_train.py
++++ b/sugartensor/sg_train.py
+@@ -11,7 +11,8 @@ __author__ = 'buriburisuri@gmail.com'
+ 
+ 
+ # global learning rate
+-_learning_rate = tf.Variable(0.001, dtype=tf.sg_floatx, name='learning_rate', trainable=False)
++_learning_rate = tf.Variable(
++    0.001, dtype=tf.sg_floatx, name='learning_rate', trainable=False)
+ 
+ 
+ def sg_train(**kwargs):
+@@ -19,7 +20,8 @@ def sg_train(**kwargs):
+     assert opt.loss is not None, 'loss is mandatory.'
+ 
+     # default training options
+-    opt += tf.sg_opt(optim='MaxProp', lr=0.001, beta1=0.9, beta2=0.99, category='')
++    opt += tf.sg_opt(optim='MaxProp', lr=0.001,
++                     beta1=0.9, beta2=0.99, category='')
+ 
+     # get optimizer
+     train_op = sg_optim(opt.loss, optim=opt.optim, lr=_learning_rate,
+@@ -59,16 +61,20 @@ def sg_optim(loss, **kwargs):
+     opt = tf.sg_opt(kwargs)
+ 
+     # default training options
+-    opt += tf.sg_opt(optim='MaxProp', lr=0.001, beta1=0.9, beta2=0.99, category='')
++    opt += tf.sg_opt(optim='MaxProp', lr=0.001,
++                     beta1=0.9, beta2=0.99, category='')
+ 
+     # select optimizer
+     if opt.optim == 'MaxProp':
+-        optim = tf.sg_optimize.MaxPropOptimizer(learning_rate=opt.lr, beta2=opt.beta2)
++        optim = tf.sg_optimize.MaxPropOptimizer(
++            learning_rate=opt.lr, beta2=opt.beta2)
+     elif opt.optim == 'AdaMax':
+-        optim = tf.sg_optimize.AdaMaxOptimizer(learning_rate=opt.lr, beta1=opt.beta1, beta2=opt.beta2)
++        optim = tf.sg_optimize.AdaMaxOptimizer(
++            learning_rate=opt.lr, beta1=opt.beta1, beta2=opt.beta2)
+ 
+     # get trainable variables
+-    var_list = [t for t in tf.trainable_variables() if t.name.encode('utf8').startswith(opt.category)]
++    var_list = [t for t in tf.trainable_variables() if t.name.encode(
++        'utf8').startswith(opt.category)]
+ 
+     # calc gradient
+     gradient = optim.compute_gradients(loss, var_list=var_list)
+@@ -116,11 +122,13 @@ def sg_train_func(func):
+                                keep_checkpoint_every_n_hours=opt.keep_interval)
+ 
+         # summary writer
+-        summary_writer = tf.train.SummaryWriter(opt.save_dir + '/log', graph=tf.get_default_graph())
++        summary_writer = tf.train.SummaryWriter(
++            opt.save_dir + '/log', graph=tf.get_default_graph())
+ 
+         # add learning rate summary
+         with tf.name_scope('summary'):
+-            tf.scalar_summary('60. learning_rate/learning_rate', _learning_rate)
++            tf.scalar_summary(
++                '60. learning_rate/learning_rate', _learning_rate)
+ 
+         # add evaluation metric summary
+         for m in opt.eval_metric:
+@@ -147,7 +155,8 @@ def sg_train_func(func):
+             sess.run(_learning_rate.assign(opt.lr))
+ 
+         # logging
+-        tf.sg_info('Training started from epoch[%03d]-step[%d].' % (start_ep, start_step))
++        tf.sg_info(
++            'Training started from epoch[%03d]-step[%d].' % (start_ep, start_step))
+ 
+         try:
+             # start data queue runner
+@@ -167,7 +176,8 @@ def sg_train_func(func):
+ 
+                     # show progressbar
+                     if opt.tqdm:
+-                        iterator = tqdm(range(opt.ep_size), desc='train', ncols=70, unit='b', leave=False)
++                        iterator = tqdm(
++                            range(opt.ep_size), desc='train', ncols=70, unit='b', leave=False)
+                     else:
+                         iterator = range(opt.ep_size)
+ 
+@@ -223,7 +233,8 @@ def sg_train_func(func):
+                                         break
+                                     else:
+                                         # decrease learning rate by half
+-                                        sess.run(_learning_rate.assign(current_lr / 2.))
++                                        sess.run(_learning_rate.assign(
++                                            current_lr / 2.))
+ 
+                             # update loss history
+                             loss_prev = loss
+@@ -250,7 +261,8 @@ def sg_train_func(func):
+             tf.sg_set_infer(sess)
+ 
+             # logging
+-            tf.sg_info('Training finished at epoch[%d]-step[%d].' % (ep, sess.run(tf.sg_global_step())))
++            tf.sg_info(
++                'Training finished at epoch[%d]-step[%d].' % (ep, sess.run(tf.sg_global_step())))
+ 
+             # close session
+             if opt.sess is None:
+diff --git a/sugartensor/sg_transform.py b/sugartensor/sg_transform.py
+index 4341fca..bc0baa8 100644
+--- a/sugartensor/sg_transform.py
++++ b/sugartensor/sg_transform.py
+@@ -71,7 +71,8 @@ def sg_argmax(tensor, opt):
+ def sg_concat(tensor, opt):
+     assert opt.target is not None, 'target is mandatory.'
+     opt += tf.sg_opt(dim=tensor.get_shape().ndims-1)
+-    target = opt.target if isinstance(opt.target, (tuple, list)) else [opt.target]
++    target = opt.target if isinstance(
++        opt.target, (tuple, list)) else [opt.target]
+     return tf.concat(opt.dim, [tensor] + target, name=opt.name)
+ 
+ 
+@@ -85,7 +86,8 @@ def sg_one_hot(tensor, opt):
+ def sg_to_sparse(tensor, opt):
+     indices = tf.where(tf.not_equal(tensor.sg_float(), 0.))
+     return tf.SparseTensor(indices=indices,
+-                           values=tf.gather_nd(tensor, indices) - 1,  # for zero-based index
++                           # for zero-based index
++                           values=tf.gather_nd(tensor, indices) - 1,
+                            shape=tf.shape(tensor).sg_cast(dtype=tf.int64))
+ 
+ 
+@@ -139,13 +141,17 @@ def sg_pool(tensor, opt):
+     opt += tf.sg_opt(stride=(1, 2, 2, 1), pad='VALID')
+ 
+     # shape stride
+-    opt.stride = opt.stride if isinstance(opt.stride, (list, tuple)) else [1, opt.stride, opt.stride, 1]
+-    opt.stride = [1, opt.stride[0], opt.stride[1], 1] if len(opt.stride) == 2 else opt.stride
++    opt.stride = opt.stride if isinstance(opt.stride, (list, tuple)) else [
++                                          1, opt.stride, opt.stride, 1]
++    opt.stride = [1, opt.stride[0], opt.stride[1],
++                  1] if len(opt.stride) == 2 else opt.stride
+ 
+     # shape size
+     opt += tf.sg_opt(size=opt.stride)
+-    opt.size = opt.size if isinstance(opt.size, (list, tuple)) else [1, opt.size, opt.size, 1]
+-    opt.size = [1, opt.size[0], opt.size[1], 1] if len(opt.size) == 2 else opt.size
++    opt.size = opt.size if isinstance(opt.size, (list, tuple)) else [
++                                      1, opt.size, opt.size, 1]
++    opt.size = [1, opt.size[0], opt.size[1], 1] if len(
++        opt.size) == 2 else opt.size
+ 
+     if opt.avg:
+         out = tf.nn.avg_pool(tensor, opt.size, opt.stride, opt.pad)
+@@ -181,7 +187,8 @@ def sg_lookup(tensor, opt):
+ def sg_reverse_seq(tensor, opt):
+     # default sequence dimension
+     opt += tf.sg_opt(dim=1)
+-    seq_len = tf.not_equal(tensor, tf.zeros_like(tensor)).sg_int().sg_sum(dims=opt.dim)
++    seq_len = tf.not_equal(tensor, tf.zeros_like(tensor)
++                           ).sg_int().sg_sum(dims=opt.dim)
+     return tf.reverse_sequence(tensor, seq_len, opt.dim, name=opt.name)
+ 
+ 
+@@ -205,7 +212,8 @@ def sg_periodic_shuffle(tensor, opt):
+     channel_factor = channel / channel_target
+ 
+     # intermediate shape for shuffling
+-    shape_1 = [batch, row, col, channel_factor / opt.factor, channel_factor / opt.factor]
++    shape_1 = [batch, row, col, channel_factor /
++               opt.factor, channel_factor / opt.factor]
+     shape_2 = [batch, row * opt.factor, col * opt.factor, 1]
+ 
+     # reshape and transpose for periodic shuffling for each channel
+@@ -234,7 +242,8 @@ def sg_inverse_periodic_shuffle(tensor, opt):
+     channel_factor = opt.factor * opt.factor
+ 
+     # intermediate shape for shuffling
+-    shape_1 = [batch, row / opt.factor, col / opt.factor, channel_factor // opt.factor, channel_factor // opt.factor]
++    shape_1 = [batch, row / opt.factor, col / opt.factor,
++               channel_factor // opt.factor, channel_factor // opt.factor]
+     shape_2 = [batch, row / opt.factor, col / opt.factor, channel_factor]
+ 
+     # reshape and transpose for periodic shuffling for each channel
+
+
+The command "git --no-pager diff --ignore-all-space --ignore-blank-lines" exited with 0.
